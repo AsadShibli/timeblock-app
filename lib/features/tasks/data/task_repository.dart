@@ -81,7 +81,8 @@ class TaskRepository {
   }
 
   /// Copies [task] to the bottom of [toDateKey], then removes it from [fromDateKey].
-  Future<void> moveTask(
+  /// Returns the new document id.
+  Future<String> moveTask(
     String userId,
     String fromDateKey,
     String toDateKey,
@@ -105,6 +106,20 @@ class TaskRepository {
       'exists': true,
     }, SetOptions(merge: true)));
     queueWrite(_items(userId, fromDateKey).doc(task.id).delete());
+    return doc.id;
+  }
+
+  /// Re-creates a deleted [task] under its original id (Undo).
+  Future<void> restoreTask(String userId, String dateKey, DailyTask task) async {
+    final now = DateTime.now().toIso8601String();
+    queueWrite(_items(userId, dateKey).doc(task.id).set({
+      ...task.toMap(),
+      'createdAt': (task.createdAt ?? DateTime.now()).toIso8601String(),
+      'updatedAt': now,
+    }));
+    queueWrite(_db.doc(FirestorePaths.taskDay(userId, dateKey)).set({
+      'exists': true,
+    }, SetOptions(merge: true)));
   }
 
   /// Deletes every task on [dateKey], then the parent day stub.

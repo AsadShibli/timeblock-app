@@ -34,14 +34,28 @@ class TaskTile extends StatelessWidget {
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.only(left: 20),
         color: Colors.indigo.shade700,
-        child: const Icon(Icons.arrow_forward, color: Colors.white),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.arrow_forward, color: Colors.white),
+            SizedBox(width: 8),
+            Text('Tomorrow', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          ],
+        ),
       ),
       // Swipe left -> delete.
       secondaryBackground: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         color: Colors.red.shade800,
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Delete', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+            SizedBox(width: 8),
+            Icon(Icons.delete, color: Colors.white),
+          ],
+        ),
       ),
       onDismissed: (dir) => dir == DismissDirection.startToEnd
           ? onMoveToNextDay()

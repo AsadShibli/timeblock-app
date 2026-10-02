@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/firestore_paths.dart';
@@ -103,12 +104,29 @@ class TaskActions extends _$TaskActions {
   }
 
   /// Swipe-right: moves a task to the following calendar day.
-  Future<void> moveToNextDay(String dateKey, DailyTask task) async {
+  /// Returns an Undo callback that moves it back (null when signed out).
+  Future<VoidCallback?> moveToNextDay(String dateKey, DailyTask task) async {
+    final uid = _uid;
+    if (uid == null) return null;
+    final d = DateTime.parse(dateKey);
+    final nextKey = FirestorePaths.dateKey(DateTime(d.year, d.month, d.day + 1));
+    final newId = await _repo.moveTask(uid, dateKey, nextKey, task);
+    final moved = DailyTask(
+      id: newId,
+      title: task.title,
+      priority: task.priority,
+      energy: task.energy,
+      value: task.value,
+      habitId: task.habitId,
+    );
+    return () => _repo.moveTask(uid, nextKey, dateKey, moved);
+  }
+
+  /// Puts a swiped-away task back on [dateKey] (Undo for delete).
+  Future<void> restore(String dateKey, DailyTask task) async {
     final uid = _uid;
     if (uid == null) return;
-    final d = DateTime.parse(dateKey);
-    final next = DateTime(d.year, d.month, d.day + 1);
-    await _repo.moveTask(uid, dateKey, FirestorePaths.dateKey(next), task);
+    await _repo.restoreTask(uid, dateKey, task);
   }
 
   /// Wipe every Brain Dump task for one calendar day.

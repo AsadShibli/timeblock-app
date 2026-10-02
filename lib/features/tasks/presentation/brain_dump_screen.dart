@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/brain_dump_day_provider.dart';
@@ -83,6 +84,22 @@ class _BrainDumpScreenState extends ConsumerState<BrainDumpScreen> {
         );
   }
 
+  void _showUndo(String message, VoidCallback? undo) {
+    if (!mounted) return;
+    final m = ScaffoldMessenger.of(context);
+    m.clearSnackBars();
+    m.showSnackBar(SnackBar(
+      content: Text(message),
+      duration: const Duration(seconds: 4),
+      behavior: SnackBarBehavior.floating,
+      // Sit above the floating input row.
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 80),
+      action: undo == null
+          ? null
+          : SnackBarAction(label: 'UNDO', onPressed: undo),
+    ));
+  }
+
   /// Persist a new top-to-bottom order after a drag drop.
   /// [newIndex] is already corrected by onReorderItem (no extra -1).
   void _onReorder(String dateKey, List<DailyTask> tasks, int oldIndex, int newIndex) {
@@ -153,7 +170,20 @@ class _BrainDumpScreenState extends ConsumerState<BrainDumpScreen> {
       data: (tasks) {
         if (tasks.isEmpty) {
           return const Center(
-            child: Text('No tasks yet', style: TextStyle(color: Colors.white38)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.inbox_outlined, size: 48, color: Colors.white24),
+                SizedBox(height: 12),
+                Text('No tasks yet', style: TextStyle(color: Colors.white54, fontSize: 16)),
+                SizedBox(height: 6),
+                Text(
+                  'Type below to add one.\nSwipe right = tomorrow · left = delete',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white30, fontSize: 12),
+                ),
+              ],
+            ),
           );
         }
         return ReorderableListView.builder(
@@ -171,6 +201,7 @@ class _BrainDumpScreenState extends ConsumerState<BrainDumpScreen> {
               key: ValueKey(task.id),
               task: task,
               onTogglePriority: () {
+                HapticFeedback.selectionClick();
                 ref.read(taskActionsProvider.notifier).setPriority(
                       dateKey,
                       task,
@@ -178,11 +209,22 @@ class _BrainDumpScreenState extends ConsumerState<BrainDumpScreen> {
                     );
               },
               onEdit: () => _editTask(dateKey, task),
-              onMoveToNextDay: () {
-                ref.read(taskActionsProvider.notifier).moveToNextDay(dateKey, task);
+              onMoveToNextDay: () async {
+                HapticFeedback.lightImpact();
+                final undo = await ref
+                    .read(taskActionsProvider.notifier)
+                    .moveToNextDay(dateKey, task);
+                _showUndo('Moved to tomorrow', undo);
               },
               onDelete: () {
+                HapticFeedback.mediumImpact();
                 ref.read(taskActionsProvider.notifier).delete(dateKey, task.id);
+                _showUndo(
+                  'Task deleted',
+                  () => ref
+                      .read(taskActionsProvider.notifier)
+                      .restore(dateKey, task),
+                );
               },
               dragHandle: ReorderableDragStartListener(
                 index: i,
