@@ -110,7 +110,9 @@ class TaskActions extends _$TaskActions {
     if (uid == null) return null;
     final d = DateTime.parse(dateKey);
     final nextKey = FirestorePaths.dateKey(DateTime(d.year, d.month, d.day + 1));
-    final newId = await _repo.moveTask(uid, dateKey, nextKey, task);
+    // Capture now: this autoDispose notifier is gone by the time Undo is tapped.
+    final repo = _repo;
+    final newId = await repo.moveTask(uid, dateKey, nextKey, task);
     final moved = DailyTask(
       id: newId,
       title: task.title,
@@ -119,7 +121,7 @@ class TaskActions extends _$TaskActions {
       value: task.value,
       habitId: task.habitId,
     );
-    return () => _repo.moveTask(uid, nextKey, dateKey, moved);
+    return () => repo.moveTask(uid, nextKey, dateKey, moved);
   }
 
   /// Puts a swiped-away task back on [dateKey] (Undo for delete).
