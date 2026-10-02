@@ -4,7 +4,8 @@ import 'firestore_paths.dart';
 
 part 'selected_day_provider.g.dart';
 
-/// Shared "today" (local) for Brain Dump + Execution tabs.
+/// Calendar-midnight "today" for the Execution tab.
+/// Brain Dump uses [brainDumpDayProvider] (noon cutoff) instead.
 @Riverpod(keepAlive: true)
 class SelectedDay extends _$SelectedDay {
   @override

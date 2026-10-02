@@ -18,6 +18,12 @@ class FirestorePaths {
   static String taskItems(String userId, String dateKey) =>
       'tasks/$userId/daily_tasks/$dateKey/items';
 
+  /// Parent day doc so we can list dates and clear earlier Brain Dump days.
+  static String taskDay(String userId, String dateKey) =>
+      'tasks/$userId/daily_tasks/$dateKey';
+
+  static String taskDays(String userId) => 'tasks/$userId/daily_tasks';
+
   static String eventItems(String userId, String dateKey) =>
       'events/$userId/daily_events/$dateKey/items';
 

@@ -100,7 +100,7 @@ class _ExecutionCalendarScreenState
           DailyEvent(
             id: '',
             title: task.title,
-            description: 'From Brain Dump',
+            description: 'From Daily Task',
             start: start,
             end: start.add(const Duration(hours: 1)),
             color: EventColor.byIndex(_eventsController.events.length),

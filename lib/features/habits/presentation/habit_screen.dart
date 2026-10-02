@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../tasks/presentation/edit_task_sheet.dart';
+import '../domain/habit_definition.dart';
 import '../domain/habit_row.dart';
 import '../providers/habit_providers.dart';
+import 'habit_repeat_sheet.dart';
 import 'habit_tile.dart';
 
 /// Tab 5: daily Habits — definitions + today's logs (no midnight reset).
@@ -48,6 +50,17 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
         .rename(row.definition.id, updated);
   }
 
+  Future<void> _schedule(HabitRow row) async {
+    final updated = await showModalBottomSheet<HabitDefinition>(
+      context: context,
+      backgroundColor: const Color(0xFF121212),
+      isScrollControlled: true,
+      builder: (context) => HabitRepeatSheet(habit: row.definition),
+    );
+    if (updated == null || !mounted) return;
+    await ref.read(habitActionsProvider.notifier).saveRepeat(updated);
+  }
+
   @override
   Widget build(BuildContext context) {
     final habitsAsync = ref.watch(todaysHabitsProvider);
@@ -84,26 +97,83 @@ class _HabitScreenState extends ConsumerState<HabitScreen> {
             ),
           );
         }
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(0, 8, 0, 88),
-          itemCount: rows.length,
-          itemBuilder: (context, i) {
-            final row = rows[i];
-            return HabitTile(
-              row: row,
-              onToggle: () {
-                ref.read(habitActionsProvider.notifier).toggleToday(row);
-              },
-              onEdit: () => _edit(row),
-              onDelete: () {
-                ref
-                    .read(habitActionsProvider.notifier)
-                    .deleteDefinition(row.definition.id);
-              },
-            );
-          },
+        return Column(
+          children: [
+            _TodayProgress(rows: rows),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(0, 8, 0, 88),
+                itemCount: rows.length,
+                itemBuilder: (context, i) {
+                  final row = rows[i];
+                  return HabitTile(
+                    row: row,
+                    onToggle: () {
+                      ref.read(habitActionsProvider.notifier).toggleToday(row);
+                    },
+                    onEdit: () => _edit(row),
+                    onSchedule: () => _schedule(row),
+                    onDelete: () {
+                      ref
+                          .read(habitActionsProvider.notifier)
+                          .deleteDefinition(row.definition.id);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
+    );
+  }
+}
+
+/// Circle: completed habits today / total habits (e.g. 1/10).
+class _TodayProgress extends StatelessWidget {
+  const _TodayProgress({required this.rows});
+
+  final List<HabitRow> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = rows.length;
+    final done = rows.where((r) => r.isCompletedToday).length;
+    final value = total == 0 ? 0.0 : done / total;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 64,
+            height: 64,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: value,
+                  strokeWidth: 6,
+                  color: const Color(0xFFB39DDB),
+                  backgroundColor: Colors.white12,
+                ),
+                Text(
+                  '$done/$total',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          const Text(
+            'Today’s progress',
+            style: TextStyle(color: Colors.white70, fontSize: 15),
+          ),
+        ],
+      ),
     );
   }
 }

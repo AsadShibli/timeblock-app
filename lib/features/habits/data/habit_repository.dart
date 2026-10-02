@@ -38,6 +38,15 @@ class HabitRepository {
         );
   }
 
+  /// All logs (used for streaks + today's check-in).
+  Stream<List<HabitLog>> watchLogs(String userId) {
+    return _logs(userId).snapshots().map(
+          (snap) => snap.docs
+              .map((d) => HabitLog.fromMap(d.id, d.data()))
+              .toList(),
+        );
+  }
+
   Future<String> addDefinition(String userId, String name) async {
     // Was: await _defs().add(...) — that waits for the server (UI freeze offline).
     final doc = _defs(userId).doc();
@@ -57,6 +66,11 @@ class HabitRepository {
     queueWrite(_defs(userId).doc(habitId).update({
       'name': name.trim(),
     }));
+  }
+
+  /// Saves name + repeat window (calendar schedule).
+  Future<void> saveDefinition(String userId, HabitDefinition habit) async {
+    queueWrite(_defs(userId).doc(habit.id).update(habit.toMap()));
   }
 
   Future<void> deleteDefinition(String userId, String habitId) async {

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../audit/presentation/audit_screen.dart';
+// Audit tab removed: Daily Task already has $ leverage + energy.
+// import '../audit/presentation/audit_screen.dart';
 import '../auth/providers/auth_providers.dart';
 import '../events/presentation/execution_calendar_screen.dart';
 import '../habits/presentation/habit_screen.dart';
 import '../tasks/presentation/brain_dump_screen.dart';
 import '../wishlist/presentation/wishlist_screen.dart';
 
-/// Material 3 shell: 5 tabs evenly spaced in NavigationBar.
+/// Material 3 shell: 4 tabs (Audit hidden — Daily Task covers $ / energy).
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
@@ -20,10 +21,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   int _index = 0;
 
   static const _titles = [
-    'Brain Dump',
+    'Daily Task',
     'Execution',
     'Wish List',
-    'Audit',
+    // 'Audit',
     'Habits',
   ];
 
@@ -59,7 +60,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           BrainDumpScreen(),
           ExecutionCalendarScreen(),
           WishlistScreen(),
-          AuditScreen(),
+          // AuditScreen(),
           HabitScreen(),
         ],
       ),
@@ -68,7 +69,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         height: 68,
-        // Even spacing across full width for 5 destinations.
         indicatorColor: const Color(0xFFB39DDB).withValues(alpha: 0.28),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         selectedIndex: _index,
@@ -77,7 +77,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           NavigationDestination(
             icon: Icon(Icons.list_alt_outlined),
             selectedIcon: Icon(Icons.list_alt),
-            label: 'Brain Dump',
+            label: 'Daily Task',
           ),
           NavigationDestination(
             icon: Icon(Icons.calendar_today_outlined),
@@ -89,11 +89,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             selectedIcon: Icon(Icons.lightbulb),
             label: 'Wish List',
           ),
-          NavigationDestination(
-            icon: Icon(Icons.analytics_outlined),
-            selectedIcon: Icon(Icons.analytics),
-            label: 'Audit',
-          ),
+          // NavigationDestination(
+          //   icon: Icon(Icons.analytics_outlined),
+          //   selectedIcon: Icon(Icons.analytics),
+          //   label: 'Audit',
+          // ),
           NavigationDestination(
             icon: Icon(Icons.repeat),
             selectedIcon: Icon(Icons.repeat_on),

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../domain/daily_task.dart';
 import '../domain/task_priority.dart';
 
-/// Brain Dump row: swipe delete, flag = priority, title = edit.
+/// Brain Dump row: swipe right = next day, swipe left = delete, flag = priority, title = edit.
 class TaskTile extends StatelessWidget {
   const TaskTile({
     super.key,
@@ -11,26 +11,41 @@ class TaskTile extends StatelessWidget {
     required this.onTogglePriority,
     required this.onEdit,
     required this.onDelete,
+    required this.onMoveToNextDay,
+    this.dragHandle,
   });
 
   final DailyTask task;
   final VoidCallback onTogglePriority;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onMoveToNextDay;
+  /// Web/desktop drag affordance; null when the row is not reorderable.
+  final Widget? dragHandle;
 
   @override
   Widget build(BuildContext context) {
     return Dismissible(
       // Phase 1: Firestore doc id as dismiss key.
       key: ValueKey(task.id),
-      direction: DismissDirection.endToStart,
+      direction: DismissDirection.horizontal,
+      // Swipe right -> move to next day.
       background: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 20),
+        color: Colors.indigo.shade700,
+        child: const Icon(Icons.arrow_forward, color: Colors.white),
+      ),
+      // Swipe left -> delete.
+      secondaryBackground: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         color: Colors.red.shade800,
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      onDismissed: (_) => onDelete(),
+      onDismissed: (dir) => dir == DismissDirection.startToEnd
+          ? onMoveToNextDay()
+          : onDelete(),
       // No ListTile.onTap — gestures are zone-isolated below.
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -66,6 +81,40 @@ class TaskTile extends StatelessWidget {
             fontSize: 11,
             fontWeight: FontWeight.w400,
           ),
+        ),
+        // Same $ badge + energy dot as Audit tiles.
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white12,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '\$${task.value}',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: task.energy.color,
+                shape: BoxShape.circle,
+              ),
+            ),
+            if (dragHandle != null) ...[
+              const SizedBox(width: 8),
+              dragHandle!,
+            ],
+          ],
         ),
       ),
     );

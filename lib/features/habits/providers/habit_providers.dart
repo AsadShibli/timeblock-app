@@ -2,9 +2,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/firestore_paths.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../tasks/providers/task_providers.dart';
 import '../data/habit_repository.dart';
 import '../domain/habit_definition.dart';
 import '../domain/habit_log.dart';
+import '../domain/habit_repeat.dart';
 import '../domain/habit_row.dart';
 
 part 'habit_providers.g.dart';
@@ -23,8 +25,7 @@ Stream<List<HabitDefinition>> habitDefinitions(Ref ref) {
 Stream<List<HabitLog>> todaysHabitLogs(Ref ref) {
   final uid = ref.watch(authSessionProvider);
   if (uid == null) return Stream.value(const []);
-  final today = FirestorePaths.dateKey(DateTime.now());
-  return ref.watch(habitRepositoryProvider).watchLogsForDate(uid, today);
+  return ref.watch(habitRepositoryProvider).watchLogs(uid);
 }
 
 /// Combines definitions + today's logs into UI rows (instant stream updates).
@@ -40,10 +41,24 @@ AsyncValue<List<HabitRow>> todaysHabits(Ref ref) {
       loading: () => const AsyncLoading(),
       error: AsyncError.new,
       data: (logs) {
-        final logByHabit = {for (final l in logs) l.habitId: l.id};
+        final today = FirestorePaths.dateKey(DateTime.now());
+        final logByHabit = {
+          for (final l in logs)
+            if (l.dateString == today) l.habitId: l.id,
+        };
         return AsyncData([
           for (final d in defs)
-            HabitRow(definition: d, todaysLogId: logByHabit[d.id]),
+            HabitRow(
+              definition: d,
+              todaysLogId: logByHabit[d.id],
+              streak: habitStreak(
+                {
+                  for (final l in logs)
+                    if (l.habitId == d.id) l.dateString,
+                },
+                DateTime.now(),
+              ),
+            ),
         ]);
       },
     ),
@@ -77,6 +92,31 @@ class HabitActions extends _$HabitActions {
     final uid = _uid;
     if (uid == null) return;
     await _repo.deleteDefinition(uid, habitId);
+  }
+
+  /// Saves the calendar repeat and seeds Daily Task rows for matching days.
+  Future<void> saveRepeat(HabitDefinition habit) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await _repo.saveDefinition(uid, habit);
+    if (habit.repeatKind == HabitRepeatKind.none ||
+        habit.repeatStart == null ||
+        habit.repeatEnd == null) {
+      return;
+    }
+    final days = habitRepeatDates(
+      kind: habit.repeatKind,
+      start: habit.repeatStart!,
+      end: habit.repeatEnd!,
+    );
+    final tasks = ref.read(taskActionsProvider.notifier);
+    for (final day in days) {
+      await tasks.ensureHabitTask(
+        FirestorePaths.dateKey(day),
+        habit.id,
+        habit.name,
+      );
+    }
   }
 
   /// Check-in ONLY — writes/deletes habit_logs for today (YYYY-MM-DD).

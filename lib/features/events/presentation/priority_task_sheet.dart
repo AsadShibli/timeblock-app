@@ -55,7 +55,7 @@ class PriorityTaskSheet extends ConsumerWidget {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Text(
-              'No Priority tasks today.\nFlag one in Brain Dump first.',
+              'No Priority tasks today.\nFlag one in Daily Task first.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white38),
             ),

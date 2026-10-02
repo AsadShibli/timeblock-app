@@ -10,12 +10,15 @@ class HabitTile extends StatelessWidget {
     required this.onToggle,
     required this.onEdit,
     required this.onDelete,
+    required this.onSchedule,
   });
 
   final HabitRow row;
   final VoidCallback onToggle;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  /// Opens the repeat calendar (daily / weekly / monthly / custom).
+  final VoidCallback onSchedule;
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +69,15 @@ class HabitTile extends StatelessWidget {
               decorationColor: Colors.white38,
             ),
           ),
+        ),
+        subtitle: Text(
+          row.streak > 0 ? '${row.streak}-day streak' : 'No streak yet',
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        trailing: IconButton(
+          tooltip: 'Repeat on Daily Task',
+          onPressed: onSchedule,
+          icon: const Icon(Icons.calendar_month, color: Color(0xFFB39DDB)),
         ),
       ),
     );
