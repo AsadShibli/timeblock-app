@@ -86,6 +86,17 @@ class TaskActions extends _$TaskActions {
     );
   }
 
+  /// Sets the planned duration; null clears it.
+  Future<void> setDuration(String dateKey, DailyTask task, int? minutes) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await _repo.updateTask(
+      uid,
+      dateKey,
+      task.copyWith(durationMinutes: minutes, clearDuration: minutes == null),
+    );
+  }
+
   /// Writes 0..n-1 sortOrder after a drag-reorder in Brain Dump.
   Future<void> reorder(String dateKey, List<DailyTask> ordered) async {
     final uid = _uid;
@@ -120,6 +131,7 @@ class TaskActions extends _$TaskActions {
       energy: task.energy,
       value: task.value,
       habitId: task.habitId,
+      durationMinutes: task.durationMinutes,
     );
     return () => repo.moveTask(uid, nextKey, dateKey, moved);
   }

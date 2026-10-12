@@ -10,6 +10,7 @@ class TaskTile extends StatelessWidget {
     required this.task,
     required this.onTogglePriority,
     required this.onEdit,
+    required this.onSetDuration,
     required this.onDelete,
     required this.onMoveToNextDay,
     this.dragHandle,
@@ -18,6 +19,8 @@ class TaskTile extends StatelessWidget {
   final DailyTask task;
   final VoidCallback onTogglePriority;
   final VoidCallback onEdit;
+  /// Called with 15/30/45/60, or null to clear.
+  final ValueChanged<int?> onSetDuration;
   final VoidCallback onDelete;
   final VoidCallback onMoveToNextDay;
   /// Web/desktop drag affordance; null when the row is not reorderable.
@@ -100,6 +103,8 @@ class TaskTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            _DurationChip(minutes: task.durationMinutes, onSelected: onSetDuration),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -160,6 +165,63 @@ class _PriorityDot extends StatelessWidget {
               ? Icons.flag_outlined
               : Icons.circle_outlined,
       color: TaskTile._color(priority),
+    );
+  }
+}
+
+/// Tappable duration pill: shows "30m" or a timer icon; menu offers presets.
+class _DurationChip extends StatelessWidget {
+  const _DurationChip({required this.minutes, required this.onSelected});
+
+  final int? minutes;
+  final ValueChanged<int?> onSelected;
+
+  static const presets = [15, 30, 45, 60];
+
+  @override
+  Widget build(BuildContext context) {
+    final set = minutes != null;
+    return PopupMenuButton<int>(
+      tooltip: 'Duration',
+      color: const Color(0xFF1E1E1E),
+      padding: EdgeInsets.zero,
+      // 0 = clear (presets are all > 0).
+      onSelected: (m) => onSelected(m == 0 ? null : m),
+      itemBuilder: (_) => [
+        for (final m in presets)
+          CheckedPopupMenuItem<int>(
+            value: m,
+            checked: minutes == m,
+            child: Text('$m min', style: const TextStyle(color: Colors.white)),
+          ),
+        if (set)
+          const PopupMenuItem<int>(
+            value: 0,
+            child: Text('Clear', style: TextStyle(color: Colors.white54)),
+          ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: set ? const Color(0x33B39DDB) : Colors.white10,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.timer_outlined,
+                size: 14, color: set ? const Color(0xFFB39DDB) : Colors.white38),
+            if (set) ...[
+              const SizedBox(width: 4),
+              Text('${minutes}m',
+                  style: const TextStyle(
+                      color: Color(0xFFB39DDB),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500)),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

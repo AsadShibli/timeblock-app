@@ -208,6 +208,10 @@ class _BrainDumpScreenState extends ConsumerState<BrainDumpScreen> {
                       _next(task.priority),
                     );
               },
+              onSetDuration: (m) {
+                HapticFeedback.selectionClick();
+                ref.read(taskActionsProvider.notifier).setDuration(dateKey, task, m);
+              },
               onEdit: () => _editTask(dateKey, task),
               onMoveToNextDay: () async {
                 HapticFeedback.lightImpact();

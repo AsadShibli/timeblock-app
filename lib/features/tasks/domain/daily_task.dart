@@ -11,6 +11,7 @@ class DailyTask {
     this.value = 1,
     this.sortOrder = 0,
     this.habitId,
+    this.durationMinutes,
     this.createdAt,
     this.updatedAt,
   });
@@ -26,6 +27,8 @@ class DailyTask {
   final int sortOrder;
   /// Set when this row was created from a Habits schedule.
   final String? habitId;
+  /// Planned length in minutes (15/30/45/60 presets); null = not set.
+  final int? durationMinutes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -36,6 +39,8 @@ class DailyTask {
     int? value,
     int? sortOrder,
     String? habitId,
+    int? durationMinutes,
+    bool clearDuration = false,
   }) {
     return DailyTask(
       id: id,
@@ -45,6 +50,8 @@ class DailyTask {
       value: value ?? this.value,
       sortOrder: sortOrder ?? this.sortOrder,
       habitId: habitId ?? this.habitId,
+      durationMinutes:
+          clearDuration ? null : (durationMinutes ?? this.durationMinutes),
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
@@ -58,6 +65,7 @@ class DailyTask {
         'value': value,
         'sortOrder': sortOrder,
         'habitId': habitId,
+        'durationMinutes': durationMinutes,
         'createdAt': createdAt?.toIso8601String(),
         'updatedAt': updatedAt?.toIso8601String(),
       };
@@ -76,6 +84,7 @@ class DailyTask {
       value: parsedValue.clamp(1, 4),
       sortOrder: parsedOrder,
       habitId: map['habitId'] as String?,
+      durationMinutes: (map['durationMinutes'] as num?)?.toInt(),
       createdAt: DateTime.tryParse(map['createdAt'] as String? ?? ''),
       updatedAt: DateTime.tryParse(map['updatedAt'] as String? ?? ''),
     );
